@@ -1,0 +1,23 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "media-transcoding-testApi", "media-transcoding-testApi\media-transcoding-testApi.csproj", "{87F25E5B-4F80-4831-8367-FDB6127401AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "media-transcoding-app", "media-transcoding-app\media-transcoding-app.csproj", "{A0A65840-7FA2-4B5D-8E52-D822ADBB5076}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{87F25E5B-4F80-4831-8367-FDB6127401AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87F25E5B-4F80-4831-8367-FDB6127401AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87F25E5B-4F80-4831-8367-FDB6127401AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87F25E5B-4F80-4831-8367-FDB6127401AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0A65840-7FA2-4B5D-8E52-D822ADBB5076}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0A65840-7FA2-4B5D-8E52-D822ADBB5076}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0A65840-7FA2-4B5D-8E52-D822ADBB5076}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0A65840-7FA2-4B5D-8E52-D822ADBB5076}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

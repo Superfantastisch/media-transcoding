@@ -1,0 +1,83 @@
+<section class="mm-content">
+  <section fxLayout="row" fxLayoutAlign="end">
+    <mat-form-field>
+      <mat-select placeholder="Solution" [(ngModel)]="mediaManipulationState.type" [disabled]="mediaManipulationTypeChangeDisabled()" (change)="mediaManipulationTypeChange($event)">
+        <mat-option *ngFor="let type of mediaManipulationType" [value]="type" disableRipple="true">
+          {{ type }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </section>
+  <section class="mm-cmd-input">
+    <form [formGroup]="mediaForm" fxLayout="row wrap" fxLayoutAlign="space-between" novalidate>
+      <!-- select media file -->
+      <div>
+        <input type="file" (change)="onNativeInputFileSelect($event)" #inputFile hidden />
+        <button mat-raised-button (click)="selectMediaFile($event)" type="button">Select file</button>
+      </div>
+      <!-- media title -->
+      <mat-form-field class="example-full-width">
+        <input matInput placeholder="Title" formControlName="title">
+      </mat-form-field>
+      <!-- media resolution -->
+      <mat-form-field>
+        <mat-select placeholder="Resolution" formControlName="resolution">
+          <mat-option *ngFor="let resolution of mediaResolution" [value]="resolution">
+            {{ resolution }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <!-- media bitrate -->
+      <mat-form-field class="example-full-width">
+          <input matInput placeholder="Bitrate" type="number" formControlName="bitrate">
+        </mat-form-field>
+        <!-- media framerate -->
+      <mat-form-field class="example-full-width">
+          <input matInput placeholder="Framerate" type="number" formControlName="framerate">
+        </mat-form-field>
+        <!-- media keyframerate -->
+      <mat-form-field class="example-full-width">
+        <input matInput placeholder="Keyframerate" type="number" formControlName="keyframerate">
+      </mat-form-field>
+      <!-- media output file name -->
+      <mat-form-field class="example-full-width">
+          <input matInput placeholder="Name" formControlName="outputFileName">
+        </mat-form-field>
+      <mat-form-field>
+      <!-- media output file format -->
+      <mat-select placeholder="Output Format" formControlName="outputFileType">
+        <mat-option *ngFor="let format of mediaFormat" [value]="format">
+          {{ format }}
+        </mat-option>
+      </mat-select>
+      </mat-form-field>
+    </form>
+    <!-- ffmpeg command -->
+    <div class="mm-cmd-line">
+      <mat-form-field class="mm-full-width">
+        <input matInput placeholder="Command" [(ngModel)]="ffmpegCmd">
+      </mat-form-field>
+    </div>
+    <div fxLayout="row" fxLayoutAlign="end">
+      <button mat-fab (click)="runCommand()" [disabled]="!isReady()">
+        <mat-icon aria-label="Run Command">send</mat-icon>
+      </button>
+    </div>
+  </section>
+  <section class="mm-loadbar" *ngIf="isRunning">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  </section>
+  <section class="mm-terminal">
+    <pre>{{ terminal }}</pre>
+  </section>
+  <section *ngIf="ffMpegOutputFiles">
+    <div *ngFor="let media of ffMpegOutputFiles">
+      <!-- warning: video only right now -->      
+      <h3>Download link</h3>      
+      <a [download]="media.download" [href]="sanatizer.bypassSecurityTrustResourceUrl(media.src)">{{media.name}}</a>
+    </div>
+  </section>
+  <section>
+    <button mat-raised-button (click)="runBenchmark()" [disabled]="!isBenchmarkReady()">Run Testscript</button>
+  </section>  
+</section>

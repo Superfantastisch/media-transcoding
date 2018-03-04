@@ -1,0 +1,26 @@
+.mm-content {  
+    margin: 18px;
+    box-sizing: content-box;
+    section {
+        width: 100%;
+        box-sizing: content-box;
+    }
+    .mm-cmd-line {
+        box-sizing: content-box;
+        width: 100%;
+    }
+    .mm-loadbar {
+        margin-top: 18px;
+    }
+    .mm-terminal {
+        margin-top: 18px;
+        max-height: 50vh;
+        background-color: #000000;
+        color: #dbdbdb;
+        overflow-y: auto;
+    }
+}
+.mm-full-width {
+    box-sizing: content-box;
+    width: 100%;
+}
