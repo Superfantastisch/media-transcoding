@@ -11,8 +11,8 @@ export enum MediaFormat {
 export enum MediaResolution {
     '640x360',
     '960x540',
-    '1280x720',
-    '1920x1080'
+    '1280x720'
+    // '1920x1080'
 }
 
 export interface iMedia {

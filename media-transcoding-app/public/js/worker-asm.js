@@ -1,16 +1,16 @@
-importScripts('ffmpeg-all-codecs.js');
 console.log('javascript...');
+importScripts('ffmpeg-all-codecs.js');
 
 var now = Date.now;
 var startTime;
 
-function print(text) {
-  postMessage({
-    'type' : 'stdout',
-    'data' : text
-  });
-  console.log('ffmpeg print: ' + text);
-}
+//function print(text) {
+//  postMessage({
+//    'type' : 'stdout',
+//    'data' : text
+//  });
+//  // console.log('ffmpeg print: ' + text);
+//}
 
 function onReturn(data) {
   postMessage({
@@ -21,18 +21,17 @@ function onReturn(data) {
 }
 
 onmessage = function(event) {
-
   var message = event.data;
 
   if (message.type === "command") {
 
     var Module = {
-      print: print,
-      printErr: print,
+      //print: print,
+      //printErr: print,
       'return': onReturn,
       files: message.files || [],
       arguments: message.arguments || [],
-      TOTAL_MEMORY: 268435456
+      TOTAL_MEMORY: 536870912
       // Can play around with this option - must be a power of 2
       // TOTAL_MEMORY: 268435456
     };

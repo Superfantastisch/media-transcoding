@@ -1,17 +1,17 @@
-importScripts('ffmpeg.js');
 console.log('webassembly...');
+importScripts('ffmpeg.js');
 
 var now = Date.now;
 var startTime;
 var benchmarkData = null;
 
-function print(text) {
-  postMessage({
-    'type' : 'stdout',
-    'data' : text
-  });
-  console.log('ffmpeg print: ' + text);
-}
+//function print(text) {
+//  postMessage({
+//    'type' : 'stdout',
+//    'data' : text
+//  });
+//  // console.log('ffmpeg print: ' + text);
+//}
 
 function onReturn(data) {
   postMessage({
@@ -20,13 +20,13 @@ function onReturn(data) {
     'time' : now() - startTime    
   });
 }
-function onBenchmarkReturn(data) {
-  postMessage({
-    'type' : 'benchresult',
-    'data' : data,
-    'time' : now() - startTime    
-  });
-}
+//function onBenchmarkReturn(data) {
+//  postMessage({
+//    'type' : 'benchresult',
+//    'data' : data,
+//    'time' : now() - startTime    
+//  });
+//}
 
 onmessage = function(event) {
 
@@ -36,12 +36,13 @@ onmessage = function(event) {
     console.log('run command');
 
     var Module = {
-      print: print,
-      printErr: print,
+      //print: print,
+      //printErr: print,
       'return': onReturn,
       files: message.files || [],
       arguments: message.arguments || [],
-      TOTAL_MEMORY: 268435456
+      TOTAL_MEMORY: 536870912
+      // TOTAL_MEMORY: 268435456
       // Can play around with this option - must be a power of 2
       // TOTAL_MEMORY: 268435456
     };
@@ -62,8 +63,8 @@ onmessage = function(event) {
     ffmpeg_run(Module);
   } else if (message.type === "benchmark") {
     var Module = {
-      print: function (data) {},
-      printErr: function (data) {},
+      //print: function (data) {},
+      //printErr: function (data) {},
       'return': onBenchmarkReturn,
       files: message.files || [],
       arguments: message.arguments || [],

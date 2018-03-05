@@ -5,6 +5,8 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { Observable } from 'rxjs';
 import { Subject } from 'rxjs/Subject';
 
+import { MediaManipulationService } from '../media-manipulation.service';
+
 import * as _ from "lodash";
 
 @Component({
@@ -37,14 +39,14 @@ export class MediaManipulationComponent implements AfterViewInit {
   isRunning: boolean = false;
   ffMpegOutputFiles = [];
   // benchmark
-  sampleVideo_60s: Uint8Array;
-  sampleVideo_120s: Uint8Array;
-  sampleVideo_180s: Uint8Array;
+  private _ffmpegFinishedStream = new Subject<any>();
+  private _workerLoadedStream = new Subject<any>();
 
   constructor(
     public sanatizer: DomSanitizer,
     private _formBuilder: FormBuilder,
-    private _zone: NgZone
+    private _zone: NgZone,
+    private _mediaManipulationService: MediaManipulationService
   ) { 
     this.createMediaForm();
     // create arrays for select box
@@ -178,49 +180,60 @@ export class MediaManipulationComponent implements AfterViewInit {
     this.initWorker();
   }
 
-  initWorker() {   
+  initWorker() {    
     this.worker = new Worker(this.mediaManipulationState.path[this.mediaManipulationState.type]);
+    // this.worker = new Worker(this.mediaManipulationState.path[this.mediaManipulationType[this.benchTypeIndex]]);
     this.worker.onmessage = (event) => {
       var message = event.data;
       if (message.type == "ready") {
         this.isWorkerLoaded = true;
-        this.startRunning();
-        this.worker.postMessage({
-          type: "command",
-          arguments: ["-help"]
-        });
+        // console.log("worker is running");
+        // console.log(this.mediaManipulationState.type);
+        this._workerLoadedStream.next({ msg: this.mediaManipulationState.type });
+        //this.startRunning();
+        //this.worker.postMessage({
+        //  type: "command",
+        //  arguments: ["-help"]
+        //});
       } else if (message.type === 'stdout') {        
-        this.writeOnTerminal(message.data + '\n');
+        // this.writeOnTerminal(message.data + '\n');
       } else if (message.type === 'start') {
         this.terminal = '';        
         this.writeOnTerminal('Worker has received command\n');
       } else if (message.type === 'done') {
-        this.mediaForm.patchValue({
-          inputMediaFile: null
-        });
-        this.ffmpegCmd = '';
+        // manipulate for testing
+        //this.mediaForm.patchValue({
+        //  inputMediaFile: null
+        //});
+        // this.ffmpegCmd = '';
         this.stopRunning();
         console.log('time');
         console.log(message.time);
         const buffers = message.data;
+        let err = true;
         if (buffers && buffers.length) {
           buffers && buffers.forEach((file) => {            
             this.ffMpegOutputFiles.push(this.getDownloadLink(file.data, file.name));
+            err = false;
           });
-        } else {
+        } else {          
           console.error('no buffer');
-        } 
+        }
+        this._ffmpegFinishedStream.next({
+          'error': err,
+          'time': message.time
+        });
       } else if (message.type === 'benchresult') {
         // this.mediaForm.patchValue({
         //   inputMediaFile: null
         // });
         // this.ffmpegCmd = '';
-        console.log('benchresult');
+        // console.log('benchresult');
         this.stopRunning();
-        console.log('time');
-        console.log(message.time);
-        console.log('benchmark result ########');
-        console.log(message.benchmarkData);
+        //console.log('time');
+        //console.log(message.time);
+        //console.log('benchmark result ########');
+        //console.log(message.benchmarkData);
         const buffers = message.data;
         if (buffers && buffers.length) {
           buffers && buffers.forEach((file) => {            
@@ -257,17 +270,17 @@ export class MediaManipulationComponent implements AfterViewInit {
 
   retrieveSampleVideo(addr: string, cb) {
     let oReq = new XMLHttpRequest();
-    oReq.open("GET", `public/javascript/${addr}`, true);
+    oReq.open("GET", `${addr}`, true);
     oReq.responseType = "arraybuffer";    
 
     oReq.onload = (oEvent) => {
       var arrayBuffer = oReq.response;
       if (arrayBuffer) {
-        console.log('bla');
+        // console.log('success');
         cb(arrayBuffer)
         // return new Uint8Array(arrayBuffer);
       } else {
-        console.log('bla wronbg');
+        // console.log('sample video request went wrong');
         return null;
       }
       
@@ -275,55 +288,153 @@ export class MediaManipulationComponent implements AfterViewInit {
   
     oReq.send(null);
   }
-  isBenchmarkReady(): boolean {
-    if (this.sampleVideo_60s && this.sampleVideo_120s && this.sampleVideo_180s) {
-      return true;
-    } else {
-      return false;
-    }
-  }
 
-  runBenchmark(): void {  
-    // setup
+  benchConfig = {
+    'source': [
+      {
+        'name': 'blade-runner_30_h1080p.mov',
+        'path': 'public/video/blade-runner_30_h1080p.mov',
+        'fileDuration': 30
+      },
+      {
+        'name': 'blade-runner_60_h1080p.mov',
+        'path': 'public/video/blade-runner_60_h1080p.mov',
+        'fileDuration': 60
+      },
+      {
+        'name': 'blade-runner_120_h1080p.mov',
+        'path': 'public/video/blade-runner_120_h1080p.mov',
+        'fileDuration': 4
+      }
+    ],
+    'n': 40
+  };
+  testResult = {
+    FileName: "",    
+    TestRunIndex: null,
+    TestType: null,
+    Resolution: null,
+    Browser: `${window.navigator.userAgent}-${window.navigator.appName}-${window.navigator.appVersion}`,
+    ComputerType: 'OfficePC',
+    TestTime: null,
+    FileDuration: null
+  }
+  sampleVideo = null;
+  benchTypeIndex = 0;
+  resolutionIndex = 0;
+  testRunIndex = 1;
+  videoSrcIndex = 0;
+
+  setupBenchmark() {
+    if (this.benchTypeIndex < this.mediaManipulationType.length) {
+      if (this.worker) {
+        this.worker.terminate();
+      }
+      this.isWorkerLoaded = false;     
+      this.mediaManipulationState.type = MediaManipulationType[this.benchTypeIndex];      
+      this.initWorker();
+      
+    } else {
+      console.log("############################### finaly done! ################################################");
+    }    
+  }
+ 
+  runBenchmark(): void {   
     this.startRunning();    
-    console.log('run benchmark');
-    // // build arguments
-    // // -i bigbuckbunny.webm -s 640x360 -c:v libx264 -b:v 600k -r 24 -x264opts keyint=48:min-keyint=48:no-scenecut -preset medium -metadata title='Title' -vf showinfo -benchmark -strict -2  Output.mp4
-    // const args = this.parseArguments("-i blade-runner-2049_60_1080p.webm -s 640x360 -c:v libx264 -b:v 600k -r 24 -x264opts keyint=48:min-keyint=48:no-scenecut -preset medium -metadata title='Title' -vf showinfo -benchmark -strict -2 Output.mp4");
-    // console.log('run benchmark args');
-    // console.log(args)
-    // if (this.sampleVideo_60s) {
-    //   this.worker.postMessage({
-    //     type: "benchmark",
-    //     arguments: args,
-    //     files: [
-    //       {
-    //         "name": "blade-runner-2049_60_1080p.webm",
-    //         "data": this.sampleVideo_60s
-    //       }
-    //     ]
-    //   });
-    // } else {
-    //   console.error('no sample data');
-    // }    
+    // console.log('start running benchmark');    
+    
+    // get the test sample video
+    this.getVideoSrcAndRunTest(this.videoSrcIndex, this.testRunIndex, this.resolutionIndex);
+  };
+  getVideoSrcAndRunTest(videoSrcIndex, testRunIndex, resolutionIndex) {
+    // console.log("getVideoSrcAndRunTest");
+    this.sampleVideo = null;
+    this.retrieveSampleVideo(this.benchConfig.source[this.videoSrcIndex].path, (ab) => {     
+      this.sampleVideo = new Uint8Array(ab);
+      // start the testrun
+      this.singleTestRun(this.benchConfig.source[this.videoSrcIndex].name, this.mediaResolution[this.resolutionIndex], this.sampleVideo);
+    });   
+  }
+  singleTestRun(name, resolution, sampleVideo) {
+    //console.log('single run');
+    //console.log(name);
+    //console.log(resolution);
+    this.ffMpegOutputFiles = [];
+    const args = this.parseArguments(`-i ${name} -s ${resolution} -c:v libx264 -b:v 600k -r 24 -x264opts keyint=48:min-keyint=48:no-scenecut -preset medium -metadata title='Title' -vf showinfo -strict -2 Output.mp4`);
+    this.worker.postMessage({
+      type: "command",
+      arguments: args,
+      files: [
+        {
+          "name": name,
+          "data": sampleVideo
+        }
+      ]
+    });
   }
 
   ngAfterViewInit() {
     this._terminalStream.asObservable().subscribe(message => {
-      this._zone.run(() => {      
+      this._zone.run(() => {
         this.terminal += message; 
      }); 
-    });
-    //  this.retrieveSampleVideo("blade-runner-2049_60_h1080p.mov", (ab) => {
-    //   this.sampleVideo_60s = new Uint8Array(ab);
-    // });
-    // this.retrieveSampleVideo("blade-runner-2049_120_h1080p.mov", (ab) => {
-    //   this.sampleVideo_120s = new Uint8Array(ab);
-    // });
-    // this.retrieveSampleVideo("blade-runner-2049_180_h1080p.mov", (ab) => {
-    //   this.sampleVideo_180s = new Uint8Array(ab);
-    // });
-    this.initWorker();
-  }
+    });   
+    // this.initWorker();
+    this._workerLoadedStream.asObservable().subscribe(msg => {
+      this.sampleVideo = null;
+      // this.benchTypeIndex = 0;
+      this.resolutionIndex = 0;
+      this.testRunIndex = 1;
+      this.videoSrcIndex = 0;
 
+      this.testResult.TestType = msg.msg;
+      this.testResult.Resolution = this.resolutionIndex;
+      this.testResult.TestRunIndex = this.testRunIndex;
+      this.testResult.FileName = this.benchConfig.source[this.videoSrcIndex].name;
+      this.testResult.FileDuration = this.benchConfig.source[this.videoSrcIndex].fileDuration;
+      // console.log("############################################################################ after init start testing with " + msg.msg);
+      this.runBenchmark();
+    });
+    this._ffmpegFinishedStream.asObservable().subscribe(result => {
+      //console.log(' ###<<<<<<<<<<<<<<<<<<<<<<< test finished >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>### ');
+      //console.log(result);
+      this.testResult.Resolution = this.resolutionIndex;
+      this.testResult.TestRunIndex = this.testRunIndex;
+      this.testResult.FileName = this.benchConfig.source[this.videoSrcIndex].name;
+      this.testResult.FileDuration = this.benchConfig.source[this.videoSrcIndex].fileDuration;     
+      this.testResult.TestTime = result.time;
+
+      this._mediaManipulationService.addTestResult(this.testResult).subscribe(res => {
+        //console.log('post result');
+        //console.log(res);
+      });
+
+      this.resolutionIndex += 1;
+      if (this.resolutionIndex < this.mediaResolution.length) {
+        this.singleTestRun(this.benchConfig.source[this.videoSrcIndex].name, this.mediaResolution[this.resolutionIndex], this.sampleVideo);
+      } else {
+        this.resolutionIndex = 0;
+        this.testRunIndex += 1;
+        if (this.testRunIndex <= this.benchConfig.n) {
+          //console.log(' ### next round on n times ### ');
+          //console.log(this.testRunIndex);
+          this.singleTestRun(this.benchConfig.source[this.videoSrcIndex].name, this.mediaResolution[this.resolutionIndex], this.sampleVideo);
+        } else {
+          this.testRunIndex = 1;
+          // console.log("test round finished next video");
+          this.videoSrcIndex += 1;
+          if (this.videoSrcIndex < this.benchConfig.source.length) {
+            //console.log('next video');
+            //console.log(this.videoSrcIndex);
+            //console.log(this.benchConfig.source[this.videoSrcIndex].name);
+            this.getVideoSrcAndRunTest(this.videoSrcIndex, this.testRunIndex, this.resolutionIndex);
+          } else {
+            // console.log("########################## All done ################################ start next technologie");
+            this.benchTypeIndex += 1;
+            this.setupBenchmark();
+          }
+        }
+      }
+    });
+  }
 }
