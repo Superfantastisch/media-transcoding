@@ -292,6 +292,11 @@ export class MediaManipulationComponent implements AfterViewInit {
   benchConfig = {
     'source': [
       {
+        'name': 'blade-runner_15_h1080p.mov',
+        'path': 'public/video/blade-runner_15_h1080p.mov',
+        'fileDuration': 15
+      },
+      {
         'name': 'blade-runner_30_h1080p.mov',
         'path': 'public/video/blade-runner_30_h1080p.mov',
         'fileDuration': 30
@@ -300,14 +305,9 @@ export class MediaManipulationComponent implements AfterViewInit {
         'name': 'blade-runner_60_h1080p.mov',
         'path': 'public/video/blade-runner_60_h1080p.mov',
         'fileDuration': 60
-      },
-      {
-        'name': 'blade-runner_120_h1080p.mov',
-        'path': 'public/video/blade-runner_120_h1080p.mov',
-        'fileDuration': 4
       }
     ],
-    'n': 40
+    'n': 30
   };
   testResult = {
     FileName: "",    
