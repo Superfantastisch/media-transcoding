@@ -9,9 +9,7 @@
     <Folder Include="wwwroot\" />
     <Folder Include="e2e\" />
     <Folder Include="src\" />
-    <Folder Include="public\" />
     <Folder Include="public\js\" />
-    <Folder Include="public\wasm\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,3 @@
-console.log('webassembly...');
 importScripts('ffmpeg.js');
 
 var now = Date.now;
@@ -32,8 +31,7 @@ onmessage = function(event) {
 
   var message = event.data;
 
-  if (message.type === "command") {
-    console.log('run command');
+  if (message.type === "command") {    
 
     var Module = {
       //print: print,
@@ -59,7 +57,7 @@ onmessage = function(event) {
                 ((Module.TOTAL_MEMORY) ? ".  Processing with " + Module.TOTAL_MEMORY + " bits." : "")
     });
 
-    startTime = now();
+    startTime = now();    
     ffmpeg_run(Module);
   } else if (message.type === "benchmark") {
     var Module = {
@@ -77,8 +75,7 @@ onmessage = function(event) {
       'data' : Module.arguments.join(" ")
     });
     startTime = now();
-    console.log('start time');
-    console.log(startTime);
+
     ffmpeg_run(Module);
   }
 };

@@ -207,8 +207,8 @@ export class MediaManipulationComponent implements AfterViewInit {
         //});
         // this.ffmpegCmd = '';
         this.stopRunning();
-        console.log('time');
-        console.log(message.time);
+        //console.log('time');
+        //console.log(message.time);
         const buffers = message.data;
         let err = true;
         if (buffers && buffers.length) {
@@ -307,14 +307,14 @@ export class MediaManipulationComponent implements AfterViewInit {
         'fileDuration': 60
       }
     ],
-    'n': 30
+    'n': 15
   };
   testResult = {
     FileName: "",    
     TestRunIndex: null,
     TestType: null,
     Resolution: null,
-    Browser: `${window.navigator.userAgent}-${window.navigator.appName}-${window.navigator.appVersion}`,
+    Browser: `Chrome`,
     ComputerType: 'OfficePC',
     TestTime: null,
     FileDuration: null
@@ -356,11 +356,11 @@ export class MediaManipulationComponent implements AfterViewInit {
     });   
   }
   singleTestRun(name, resolution, sampleVideo) {
-    //console.log('single run');
+    // console.log('single run');
     //console.log(name);
     //console.log(resolution);
     this.ffMpegOutputFiles = [];
-    const args = this.parseArguments(`-i ${name} -s ${resolution} -c:v libx264 -b:v 600k -r 24 -x264opts keyint=48:min-keyint=48:no-scenecut -preset medium -metadata title='Title' -vf showinfo -strict -2 Output.mp4`);
+    const args = this.parseArguments(`-i ${name} -s ${resolution} -c:v libx264 -b:v 600k -r 24 -x264opts keyint=48:min-keyint=48:no-scenecut -preset medium -metadata title='Title' -strict -2 Output.mp4`);
     this.worker.postMessage({
       type: "command",
       arguments: args,
@@ -374,11 +374,11 @@ export class MediaManipulationComponent implements AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this._terminalStream.asObservable().subscribe(message => {
-      this._zone.run(() => {
-        this.terminal += message; 
-     }); 
-    });   
+    //this._terminalStream.asObservable().subscribe(message => {
+    //  this._zone.run(() => {
+    //    this.terminal += message; 
+    // }); 
+    //});   
     // this.initWorker();
     this._workerLoadedStream.asObservable().subscribe(msg => {
       this.sampleVideo = null;
@@ -397,44 +397,44 @@ export class MediaManipulationComponent implements AfterViewInit {
     });
     this._ffmpegFinishedStream.asObservable().subscribe(result => {
       //console.log(' ###<<<<<<<<<<<<<<<<<<<<<<< test finished >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>### ');
-      //console.log(result);
-      this.testResult.Resolution = this.resolutionIndex;
-      this.testResult.TestRunIndex = this.testRunIndex;
-      this.testResult.FileName = this.benchConfig.source[this.videoSrcIndex].name;
-      this.testResult.FileDuration = this.benchConfig.source[this.videoSrcIndex].fileDuration;     
-      this.testResult.TestTime = result.time;
+      //console.log(result);     
+        this.testResult.Resolution = this.resolutionIndex;
+        this.testResult.TestRunIndex = this.testRunIndex;
+        this.testResult.FileName = this.benchConfig.source[this.videoSrcIndex].name;
+        this.testResult.FileDuration = this.benchConfig.source[this.videoSrcIndex].fileDuration;
+        this.testResult.TestTime = result.time;
 
-      this._mediaManipulationService.addTestResult(this.testResult).subscribe(res => {
-        //console.log('post result');
-        //console.log(res);
-      });
+        this._mediaManipulationService.addTestResult(this.testResult).subscribe(res => {
+          //console.log('post result');
+          //console.log(res);
+        });
 
-      this.resolutionIndex += 1;
-      if (this.resolutionIndex < this.mediaResolution.length) {
-        this.singleTestRun(this.benchConfig.source[this.videoSrcIndex].name, this.mediaResolution[this.resolutionIndex], this.sampleVideo);
-      } else {
-        this.resolutionIndex = 0;
-        this.testRunIndex += 1;
-        if (this.testRunIndex <= this.benchConfig.n) {
-          //console.log(' ### next round on n times ### ');
-          //console.log(this.testRunIndex);
+        this.resolutionIndex += 1;
+        if (this.resolutionIndex < this.mediaResolution.length) {
           this.singleTestRun(this.benchConfig.source[this.videoSrcIndex].name, this.mediaResolution[this.resolutionIndex], this.sampleVideo);
         } else {
-          this.testRunIndex = 1;
-          // console.log("test round finished next video");
-          this.videoSrcIndex += 1;
-          if (this.videoSrcIndex < this.benchConfig.source.length) {
-            //console.log('next video');
-            //console.log(this.videoSrcIndex);
-            //console.log(this.benchConfig.source[this.videoSrcIndex].name);
-            this.getVideoSrcAndRunTest(this.videoSrcIndex, this.testRunIndex, this.resolutionIndex);
+          this.resolutionIndex = 0;
+          this.testRunIndex += 1;
+          if (this.testRunIndex <= this.benchConfig.n) {
+            //console.log(' ### next round on n times ### ');
+            //console.log(this.testRunIndex);
+            this.singleTestRun(this.benchConfig.source[this.videoSrcIndex].name, this.mediaResolution[this.resolutionIndex], this.sampleVideo);
           } else {
-            // console.log("########################## All done ################################ start next technologie");
-            this.benchTypeIndex += 1;
-            this.setupBenchmark();
+            this.testRunIndex = 1;
+            // console.log("test round finished next video");
+            this.videoSrcIndex += 1;
+            if (this.videoSrcIndex < this.benchConfig.source.length) {
+              //console.log('next video');
+              //console.log(this.videoSrcIndex);
+              //console.log(this.benchConfig.source[this.videoSrcIndex].name);
+              this.getVideoSrcAndRunTest(this.videoSrcIndex, this.testRunIndex, this.resolutionIndex);
+            } else {
+              // console.log("########################## All done ################################ start next technologie");
+              this.benchTypeIndex += 1;
+              this.setupBenchmark();
+            }
           }
-        }
-      }
+        }     
     });
   }
 }

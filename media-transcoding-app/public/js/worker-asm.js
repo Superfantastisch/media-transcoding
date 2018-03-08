@@ -1,4 +1,3 @@
-console.log('javascript...');
 importScripts('ffmpeg-all-codecs.js');
 
 var now = Date.now;
