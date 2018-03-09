@@ -2,7 +2,9 @@ library(httr)
 library(jsonlite)
 library(magrittr)
 library(ggplot2)
+library(svglite)
 
+# load data
 testResultResponse <- GET("http://localhost:55556/api/testresult")
 testResultResponse$status_code
 testResultResponse$`content-type`
@@ -17,56 +19,81 @@ testResult
 names(testResult)
 summary(testResult)
 
-# strip objectId
-testData = testResult[,c("testType", "fileName", "resolution", "browser", "computerType", "createdOn", "testTime", "fileDuration", "testRunIndex")]
-# factor data
+# Make Data ready for analyses
+## strip db objectId
+testData = testResult[, c("testType", "fileName", "resolution", "browser", "computerType", "createdOn", "testTime", "fileDuration", "testRunIndex")]
+summary(testData)
+
+## factor data
 testData$testType = as.factor(testData$testType)
 testData$fileName = as.factor(testData$fileName)
+testData$fileDuration = as.factor(testData$fileDuration)
+testData$browser = as.factor(testData$browser)
 testData$resolution = as.factor(testData$resolution)
 testData$resolution = factor(testData$resolution, levels = c(0:2), labels = c("640x360", "960x540", "1280x720"))
 
+## adjust time results
 testData$testTimeS = testData$testTime/1000
 testData$testTimeS
-# strip creation date
+testData$testTimeM = testData$testTimeS / 60
+testData$testTimeM
+
+## strip creation date
 testData = testData[, c("testType", "fileName", "resolution", "browser", "computerType", "testTime", "fileDuration", "testRunIndex")]
 class(testData$fileDuration)
 
-# split dataframe by
-wasmTestData = subset(testData, testType == "WebAssembly")
-asmTestData = subset(testData, testType == "JavaScript")
+# Visualize results
+## compare all results in one boxplot
+performanceBoxPlot = ggplot(testData)
+performanceBoxPlot + geom_boxplot(aes(x = resolution, testTimeM, fill = testType)) + facet_grid(. ~ fileName) + scale_y_continuous(name = "Testresults in minutes")
+ggsave("performanceBoxPlot.svg")
+ggsave("performanceBoxPlot.png")
 
-# split by video length and resolution 640x360
-wasmTestData_30_640 = subset(wasmTestData, fileDuration == 15 & resolution == "640x360")
-asmTestData_30_640 = subset(asmTestData, fileDuration == 15 & resolution == "640x360")
-summary(wasmTestData_30_640)
-summary(asmTestData_30_640)
+## compore by video length and resolution
+### blade-runner_15_h1080p.mov + Chrome
+performanceBoxPlot_15_640 = ggplot(subset(testData, resolution == "640x360" & browser == "Chrome" & fileName == "blade-runner_15_h1080p.mov"), aes(x = testType, y = testTimeS, fill = testType))
+performanceBoxPlot_15_640 + geom_boxplot() + labs(x = "640x360", y = "Testresults in seconds")
+ggsave("performanceBoxPlot_15_640.svg")
+ggsave("performanceBoxPlot_15_640.png")
 
-# split by video length and resolution 1280x720
-wasmTestData_60_1280x720 = subset(wasmTestData, fileDuration == 60 & resolution == "1280x720")
-asmTestData_60_1280x720 = subset(asmTestData, fileDuration == 60 & resolution == "1280x720")
-summary(wasmTestData_60_1280x720)
-summary(asmTestData_60_1280x720)
+performanceBoxPlot_15_960 = ggplot(subset(testData, resolution == "960x540" & browser == "Chrome" & fileName == "blade-runner_15_h1080p.mov"), aes(x = testType, y = testTimeS, fill = testType))
+performanceBoxPlot_15_960 + geom_boxplot() + labs(x = "960x540", y = "Testresults in seconds")
+ggsave("performanceBoxPlot_15_960.svg")
+ggsave("performanceBoxPlot_15_960.png")
 
-# create a box-plot
-boxTestData_15_640 = subset(testData, fileDuration == 15 & resolution == "640x360")
-boxTestData_60_1280 = subset(testData, fileDuration == 60 & resolution == "1280x720")
+performanceBoxPlot_15_1280 = ggplot(subset(testData, resolution == "1280x720" & browser == "Chrome" & fileName == "blade-runner_15_h1080p.mov"), aes(x = testType, y = testTimeS, fill = testType))
+performanceBoxPlot_15_1280 + geom_boxplot() + labs(x = "1280x720", y = "Testresults in seconds")
+ggsave("performanceBoxPlot_15_1280.svg")
+ggsave("performanceBoxPlot_15_1280.png")
 
-## create plot object and draw
-performanceBoxPlot = ggplot(boxTestData_15_640, aes(testType, testTime))
-performanceBoxPlot + geom_boxplot() + labs(x = "Technology", y = "Testresults in ms")
+### blade-runner_30_h1080p.mov + Chrome
+performanceBoxPlot_30_640 = ggplot(subset(testData, resolution == "640x360" & browser == "Chrome" & fileName == "blade-runner_30_h1080p.mov"), aes(x = testType, y = testTimeS, fill = testType))
+performanceBoxPlot_30_640 + geom_boxplot() + labs(x = "640x360", y = "Testresults in seconds")
+ggsave("performanceBoxPlot_30_640.svg")
+ggsave("performanceBoxPlot_30_640.png")
 
-performanceBoxPlot = ggplot(boxTestData_60_1280, aes(testType, testTime))
-performanceBoxPlot + geom_boxplot() + labs(x = "Technology", y = "Testresults in ms")
+performanceBoxPlot_30_960 = ggplot(subset(testData, resolution == "960x540" & browser == "Chrome" & fileName == "blade-runner_30_h1080p.mov"), aes(x = testType, y = testTimeS, fill = testType))
+performanceBoxPlot_30_960 + geom_boxplot() + labs(x = "960x540", y = "Testresults in seconds")
+ggsave("performanceBoxPlot_30_960.svg")
+ggsave("performanceBoxPlot_30_960.png")
 
-### try something 
-boxTestData_60 = subset(testData, fileDuration == 60)
-performanceBoxPlot = ggplot(boxTestData_60, aes(x = resolution, testTime, fill = testType))
-performanceBoxPlot + geom_boxplot() + labs(x = "Technology", y = "Testresults in ms")
+performanceBoxPlot_30_1280 = ggplot(subset(testData, resolution == "1280x720" & browser == "Chrome" & fileName == "blade-runner_30_h1080p.mov"), aes(x = testType, y = testTimeS, fill = testType))
+performanceBoxPlot_30_1280 + geom_boxplot() + labs(x = "1280x720", y = "Testresults in seconds")
+ggsave("performanceBoxPlot_30_1280.svg")
+ggsave("performanceBoxPlot_30_1280.png")
 
-testData$testTimeM = testData$testTimeS/60
+### blade-runner_60_h1080p.mov + Chrome
+performanceBoxPlot_60_640 = ggplot(subset(testData, resolution == "640x360" & browser == "Chrome" & fileName == "blade-runner_60_h1080p.mov"), aes(x = testType, y = testTimeS, fill = testType))
+performanceBoxPlot_60_640 + geom_boxplot() + labs(x = "640x360", y = "Testresults in seconds")
+ggsave("performanceBoxPlot_60_640.svg")
+ggsave("performanceBoxPlot_60_640.png")
 
-## performanceBoxPlot = ggplot(testData)
-## performanceBoxPlot + geom_boxplot(aes(x = resolution, testTime, fill = testType)) + facet_grid(. ~ fileName) + scale_y_continuous(name = "Testresults in ms")
+performanceBoxPlot_60_960 = ggplot(subset(testData, resolution == "960x540" & browser == "Chrome" & fileName == "blade-runner_60_h1080p.mov"), aes(x = testType, y = testTimeS, fill = testType))
+performanceBoxPlot_60_960 + geom_boxplot() + labs(x = "960x540", y = "Testresults in seconds")
+ggsave("performanceBoxPlot_60_960.svg")
+ggsave("performanceBoxPlot_60_960.png")
 
-performanceBoxPlot = ggplot(subset(testData, fileDuration == 60 & resolution == "1280x720"))
-performanceBoxPlot + geom_boxplot(aes(x = testType, testTimeM, fill = testType)) + scale_y_continuous(name = "Bla")
+performanceBoxPlot_60_1280 = ggplot(subset(testData, resolution == "1280x720" & browser == "Chrome" & fileName == "blade-runner_60_h1080p.mov"), aes(x = testType, y = testTimeS, fill = testType))
+performanceBoxPlot_60_1280 + geom_boxplot() + labs(x = "1280x720", y = "Testresults in seconds")
+ggsave("performanceBoxPlot_60_1280.svg")
+ggsave("performanceBoxPlot_60_1280.png")
