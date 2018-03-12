@@ -29,27 +29,34 @@
       </mat-form-field>
       <!-- media bitrate -->
       <mat-form-field class="example-full-width">
-          <input matInput placeholder="Bitrate" type="number" formControlName="bitrate">
-        </mat-form-field>
-        <!-- media framerate -->
+        <input matInput placeholder="Bitrate" type="number" formControlName="bitrate">
+      </mat-form-field>
+      <!-- media framerate -->
       <mat-form-field class="example-full-width">
-          <input matInput placeholder="Framerate" type="number" formControlName="framerate">
-        </mat-form-field>
-        <!-- media keyframerate -->
+        <input matInput placeholder="Framerate" type="number" formControlName="framerate">
+      </mat-form-field>
+      <!-- media keyframerate -->
       <mat-form-field class="example-full-width">
         <input matInput placeholder="Keyframerate" type="number" formControlName="keyframerate">
       </mat-form-field>
       <!-- media output file name -->
       <mat-form-field class="example-full-width">
-          <input matInput placeholder="Name" formControlName="outputFileName">
-        </mat-form-field>
+        <input matInput placeholder="Name" formControlName="outputFileName">
+      </mat-form-field>
       <mat-form-field>
-      <!-- media output file format -->
-      <mat-select placeholder="Output Format" formControlName="outputFileType">
-        <mat-option *ngFor="let format of mediaFormat" [value]="format">
-          {{ format }}
-        </mat-option>
-      </mat-select>
+        <!-- media output file format -->
+        <mat-select placeholder="Output Format" formControlName="outputFileType">
+          <mat-option *ngFor="let format of mediaFormat" [value]="format">
+            {{ format }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <!-- -->
+      <mat-form-field class="example-full-width">
+        <input matInput placeholder="Browser" type="text" formControlName="browser">
+      </mat-form-field>
+      <mat-form-field class="example-full-width">
+        <input matInput placeholder="Testrunindex" type="number" formControlName="testRunIndex">
       </mat-form-field>
     </form>
     <!-- ffmpeg command -->
@@ -77,7 +84,7 @@
       <a [download]="media.download" [href]="sanatizer.bypassSecurityTrustResourceUrl(media.src)">{{media.name}}</a>
     </div>
   </section>
-  <section>
+  <!--<section>
     <button mat-raised-button (click)="setupBenchmark(0)">Run Testscript</button>
-  </section>  
+  </section>-->  
 </section>

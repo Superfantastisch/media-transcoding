@@ -39,8 +39,8 @@ export class MediaManipulationComponent implements AfterViewInit {
   isRunning: boolean = false;
   ffMpegOutputFiles = [];
   // benchmark
-  private _ffmpegFinishedStream = new Subject<any>();
-  private _workerLoadedStream = new Subject<any>();
+  //private _ffmpegFinishedStream = new Subject<any>();
+  //private _workerLoadedStream = new Subject<any>();
 
   constructor(
     public sanatizer: DomSanitizer,
@@ -76,7 +76,9 @@ export class MediaManipulationComponent implements AfterViewInit {
       framerate: 24,
       keyframerate: 48,
       outputFileName: 'Output',
-      outputFileType: ['mp4', Validators.required]
+      outputFileType: ['mp4', Validators.required],
+      browser: '',
+      testRunIndex: 0
     });    
   }
   // media file select input
@@ -120,7 +122,7 @@ export class MediaManipulationComponent implements AfterViewInit {
   }
   // set the ffmpeg command
   setCommand() {
-    this.ffmpegCmd = `-i ${this.mediaForm.get('inputMediaFileName').value} -s ${this.mediaForm.get('resolution').value} -c:v libx264 -b:v ${this.mediaForm.get('bitrate').value}k -r ${this.mediaForm.get('framerate').value} -x264opts keyint=${this.mediaForm.get('keyframerate').value}:min-keyint=${this.mediaForm.get('keyframerate').value}:no-scenecut -preset medium -metadata title='${this.mediaForm.get('title').value}' -vf showinfo -benchmark -strict -2  ${this.mediaForm.get('outputFileName').value}.${this.mediaForm.get('outputFileType').value}`
+    this.ffmpegCmd = `-i ${this.mediaForm.get('inputMediaFileName').value} -s ${this.mediaForm.get('resolution').value} -c:v libx264 -b:v ${this.mediaForm.get('bitrate').value}k -r ${this.mediaForm.get('framerate').value} -x264opts keyint=${this.mediaForm.get('keyframerate').value}:min-keyint=${this.mediaForm.get('keyframerate').value}:no-scenecut -preset medium -metadata title='${this.mediaForm.get('title').value}' -strict -2  ${this.mediaForm.get('outputFileName').value}.${this.mediaForm.get('outputFileType').value}`
   }
   /**
    * Terminal and worker connection
@@ -189,8 +191,8 @@ export class MediaManipulationComponent implements AfterViewInit {
         this.isWorkerLoaded = true;
         // console.log("worker is running");
         // console.log(this.mediaManipulationState.type);
-        this._workerLoadedStream.next({ msg: this.mediaManipulationState.type });
-        //this.startRunning();
+        // this._workerLoadedStream.next({ msg: this.mediaManipulationState.type });
+        // this.startRunning();
         //this.worker.postMessage({
         //  type: "command",
         //  arguments: ["-help"]
@@ -219,10 +221,17 @@ export class MediaManipulationComponent implements AfterViewInit {
         } else {          
           console.error('no buffer');
         }
-        this._ffmpegFinishedStream.next({
-          'error': err,
-          'time': message.time
-        });
+        this.testResult.TestTime = message.time;
+        console.log("test finished - done ------------------");
+        console.log(this.testResult);
+        //this._ffmpegFinishedStream.next({
+        //  'error': err,
+        //  'time': message.time
+        //});
+        //this._mediaManipulationService.addTestResult(this.testResult).subscribe(res => {
+        //  console.log('post result');
+        //  console.log(res);
+        //});
       } else if (message.type === 'benchresult') {
         // this.mediaForm.patchValue({
         //   inputMediaFile: null
@@ -249,6 +258,13 @@ export class MediaManipulationComponent implements AfterViewInit {
   runCommand(): void {
     if (this.isReady()) {
       this.startRunning();
+
+      this.testResult.FileName = this.mediaForm.get('inputMediaFileName').value;
+      this.testResult.Browser = this.mediaForm.get('browser').value;
+      this.testResult.Resolution = this.mediaForm.get('resolution').value;
+      this.testResult.TestRunIndex = this.mediaForm.get('testRunIndex').value;
+      this.testResult.TestType = this.mediaManipulationState.type;
+
       this.ffMpegOutputFiles = [];
       const args = this.parseArguments(this.ffmpegCmd);
       this.worker.postMessage({
@@ -289,33 +305,33 @@ export class MediaManipulationComponent implements AfterViewInit {
     oReq.send(null);
   }
 
-  benchConfig = {
-    'source': [
-      {
-        'name': 'blade-runner_15_h1080p.mov',
-        'path': 'public/video/blade-runner_15_h1080p.mov',
-        'fileDuration': 15
-      },
-      {
-        'name': 'blade-runner_30_h1080p.mov',
-        'path': 'public/video/blade-runner_30_h1080p.mov',
-        'fileDuration': 30
-      },
-      {
-        'name': 'blade-runner_60_h1080p.mov',
-        'path': 'public/video/blade-runner_60_h1080p.mov',
-        'fileDuration': 60
-      }
-    ],
-    'n': 15
-  };
+  //benchConfig = {
+  //  'source': [
+  //    {
+  //      'name': 'blade-runner_15_h1080p.mov',
+  //      'path': 'public/video/blade-runner_15_h1080p.mov',
+  //      'fileDuration': 15
+  //    },
+  //    {
+  //      'name': 'blade-runner_30_h1080p.mov',
+  //      'path': 'public/video/blade-runner_30_h1080p.mov',
+  //      'fileDuration': 30
+  //    },
+  //    {
+  //      'name': 'blade-runner_60_h1080p.mov',
+  //      'path': 'public/video/blade-runner_60_h1080p.mov',
+  //      'fileDuration': 60
+  //    }
+  //  ],
+  //  'n': 15
+  //};
   testResult = {
     FileName: "",    
     TestRunIndex: null,
     TestType: null,
     Resolution: null,
     Browser: `Chrome`,
-    ComputerType: 'OfficePC',
+    ComputerType: 'Surface Pro 2',
     TestTime: null,
     FileDuration: null
   }
@@ -325,53 +341,53 @@ export class MediaManipulationComponent implements AfterViewInit {
   testRunIndex = 1;
   videoSrcIndex = 0;
 
-  setupBenchmark() {
-    if (this.benchTypeIndex < this.mediaManipulationType.length) {
-      if (this.worker) {
-        this.worker.terminate();
-      }
-      this.isWorkerLoaded = false;     
-      this.mediaManipulationState.type = MediaManipulationType[this.benchTypeIndex];      
-      this.initWorker();
+  //setupBenchmark() {
+  //  if (this.benchTypeIndex < this.mediaManipulationType.length) {
+  //    if (this.worker) {
+  //      this.worker.terminate();
+  //    }
+  //    this.isWorkerLoaded = false;     
+  //    this.mediaManipulationState.type = MediaManipulationType[this.benchTypeIndex];      
+  //    this.initWorker();
       
-    } else {
-      console.log("############################### finaly done! ################################################");
-    }    
-  }
+  //  } else {
+  //    console.log("############################### finaly done! ################################################");
+  //  }    
+  //}
  
-  runBenchmark(): void {   
-    this.startRunning();    
-    // console.log('start running benchmark');    
+  //runBenchmark(): void {   
+  //  this.startRunning();    
+  //  // console.log('start running benchmark');    
     
-    // get the test sample video
-    this.getVideoSrcAndRunTest(this.videoSrcIndex, this.testRunIndex, this.resolutionIndex);
-  };
-  getVideoSrcAndRunTest(videoSrcIndex, testRunIndex, resolutionIndex) {
-    // console.log("getVideoSrcAndRunTest");
-    this.sampleVideo = null;
-    this.retrieveSampleVideo(this.benchConfig.source[this.videoSrcIndex].path, (ab) => {     
-      this.sampleVideo = new Uint8Array(ab);
-      // start the testrun
-      this.singleTestRun(this.benchConfig.source[this.videoSrcIndex].name, this.mediaResolution[this.resolutionIndex], this.sampleVideo);
-    });   
-  }
-  singleTestRun(name, resolution, sampleVideo) {
-    // console.log('single run');
-    //console.log(name);
-    //console.log(resolution);
-    this.ffMpegOutputFiles = [];
-    const args = this.parseArguments(`-i ${name} -s ${resolution} -c:v libx264 -b:v 600k -r 24 -x264opts keyint=48:min-keyint=48:no-scenecut -preset medium -metadata title='Title' -strict -2 Output.mp4`);
-    this.worker.postMessage({
-      type: "command",
-      arguments: args,
-      files: [
-        {
-          "name": name,
-          "data": sampleVideo
-        }
-      ]
-    });
-  }
+  //  // get the test sample video
+  //  this.getVideoSrcAndRunTest(this.videoSrcIndex, this.testRunIndex, this.resolutionIndex);
+  //};
+  //getVideoSrcAndRunTest(videoSrcIndex, testRunIndex, resolutionIndex) {
+  //  // console.log("getVideoSrcAndRunTest");
+  //  this.sampleVideo = null;
+  //  this.retrieveSampleVideo(this.benchConfig.source[this.videoSrcIndex].path, (ab) => {     
+  //    this.sampleVideo = new Uint8Array(ab);
+  //    // start the testrun
+  //    this.singleTestRun(this.benchConfig.source[this.videoSrcIndex].name, this.mediaResolution[this.resolutionIndex], this.sampleVideo);
+  //  });   
+  //}
+  //singleTestRun(name, resolution, sampleVideo) {
+  //  // console.log('single run');
+  //  //console.log(name);
+  //  //console.log(resolution);
+  //  this.ffMpegOutputFiles = [];
+  //  const args = this.parseArguments(`-i ${name} -s ${resolution} -c:v libx264 -b:v 600k -r 24 -x264opts keyint=48:min-keyint=48:no-scenecut -preset medium -metadata title='Title' -strict -2 Output.mp4`);
+  //  this.worker.postMessage({
+  //    type: "command",
+  //    arguments: args,
+  //    files: [
+  //      {
+  //        "name": name,
+  //        "data": sampleVideo
+  //      }
+  //    ]
+  //  });
+  //}
 
   ngAfterViewInit() {
     //this._terminalStream.asObservable().subscribe(message => {
@@ -379,62 +395,62 @@ export class MediaManipulationComponent implements AfterViewInit {
     //    this.terminal += message; 
     // }); 
     //});   
-    // this.initWorker();
-    this._workerLoadedStream.asObservable().subscribe(msg => {
-      this.sampleVideo = null;
-      // this.benchTypeIndex = 0;
-      this.resolutionIndex = 0;
-      this.testRunIndex = 1;
-      this.videoSrcIndex = 0;
+    this.initWorker();
+    //this._workerLoadedStream.asObservable().subscribe(msg => {
+    //  this.sampleVideo = null;
+    //  // this.benchTypeIndex = 0;
+    //  this.resolutionIndex = 0;
+    //  this.testRunIndex = 1;
+    //  this.videoSrcIndex = 0;
 
-      this.testResult.TestType = msg.msg;
-      this.testResult.Resolution = this.resolutionIndex;
-      this.testResult.TestRunIndex = this.testRunIndex;
-      this.testResult.FileName = this.benchConfig.source[this.videoSrcIndex].name;
-      this.testResult.FileDuration = this.benchConfig.source[this.videoSrcIndex].fileDuration;
-      // console.log("############################################################################ after init start testing with " + msg.msg);
-      this.runBenchmark();
-    });
-    this._ffmpegFinishedStream.asObservable().subscribe(result => {
-      //console.log(' ###<<<<<<<<<<<<<<<<<<<<<<< test finished >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>### ');
-      //console.log(result);     
-        this.testResult.Resolution = this.resolutionIndex;
-        this.testResult.TestRunIndex = this.testRunIndex;
-        this.testResult.FileName = this.benchConfig.source[this.videoSrcIndex].name;
-        this.testResult.FileDuration = this.benchConfig.source[this.videoSrcIndex].fileDuration;
-        this.testResult.TestTime = result.time;
+    //  this.testResult.TestType = msg.msg;
+    //  this.testResult.Resolution = this.resolutionIndex;
+    //  this.testResult.TestRunIndex = this.testRunIndex;
+    //  this.testResult.FileName = this.benchConfig.source[this.videoSrcIndex].name;
+    //  this.testResult.FileDuration = this.benchConfig.source[this.videoSrcIndex].fileDuration;
+    //  // console.log("############################################################################ after init start testing with " + msg.msg);
+    //  this.runBenchmark();
+    //});
+    //this._ffmpegFinishedStream.asObservable().subscribe(result => {
+    //  //console.log(' ###<<<<<<<<<<<<<<<<<<<<<<< test finished >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>### ');
+    //  //console.log(result);     
+    //    this.testResult.Resolution = this.resolutionIndex;
+    //    this.testResult.TestRunIndex = this.testRunIndex;
+    //    this.testResult.FileName = this.benchConfig.source[this.videoSrcIndex].name;
+    //    this.testResult.FileDuration = this.benchConfig.source[this.videoSrcIndex].fileDuration;
+    //    this.testResult.TestTime = result.time;
 
-        this._mediaManipulationService.addTestResult(this.testResult).subscribe(res => {
-          //console.log('post result');
-          //console.log(res);
-        });
+    //    this._mediaManipulationService.addTestResult(this.testResult).subscribe(res => {
+    //      //console.log('post result');
+    //      //console.log(res);
+    //    });
 
-        this.resolutionIndex += 1;
-        if (this.resolutionIndex < this.mediaResolution.length) {
-          this.singleTestRun(this.benchConfig.source[this.videoSrcIndex].name, this.mediaResolution[this.resolutionIndex], this.sampleVideo);
-        } else {
-          this.resolutionIndex = 0;
-          this.testRunIndex += 1;
-          if (this.testRunIndex <= this.benchConfig.n) {
-            //console.log(' ### next round on n times ### ');
-            //console.log(this.testRunIndex);
-            this.singleTestRun(this.benchConfig.source[this.videoSrcIndex].name, this.mediaResolution[this.resolutionIndex], this.sampleVideo);
-          } else {
-            this.testRunIndex = 1;
-            // console.log("test round finished next video");
-            this.videoSrcIndex += 1;
-            if (this.videoSrcIndex < this.benchConfig.source.length) {
-              //console.log('next video');
-              //console.log(this.videoSrcIndex);
-              //console.log(this.benchConfig.source[this.videoSrcIndex].name);
-              this.getVideoSrcAndRunTest(this.videoSrcIndex, this.testRunIndex, this.resolutionIndex);
-            } else {
-              // console.log("########################## All done ################################ start next technologie");
-              this.benchTypeIndex += 1;
-              this.setupBenchmark();
-            }
-          }
-        }     
-    });
+    //    this.resolutionIndex += 1;
+    //    if (this.resolutionIndex < this.mediaResolution.length) {
+    //      this.singleTestRun(this.benchConfig.source[this.videoSrcIndex].name, this.mediaResolution[this.resolutionIndex], this.sampleVideo);
+    //    } else {
+    //      this.resolutionIndex = 0;
+    //      this.testRunIndex += 1;
+    //      if (this.testRunIndex <= this.benchConfig.n) {
+    //        //console.log(' ### next round on n times ### ');
+    //        //console.log(this.testRunIndex);
+    //        this.singleTestRun(this.benchConfig.source[this.videoSrcIndex].name, this.mediaResolution[this.resolutionIndex], this.sampleVideo);
+    //      } else {
+    //        this.testRunIndex = 1;
+    //        // console.log("test round finished next video");
+    //        this.videoSrcIndex += 1;
+    //        if (this.videoSrcIndex < this.benchConfig.source.length) {
+    //          //console.log('next video');
+    //          //console.log(this.videoSrcIndex);
+    //          //console.log(this.benchConfig.source[this.videoSrcIndex].name);
+    //          this.getVideoSrcAndRunTest(this.videoSrcIndex, this.testRunIndex, this.resolutionIndex);
+    //        } else {
+    //          // console.log("########################## All done ################################ start next technologie");
+    //          this.benchTypeIndex += 1;
+    //          this.setupBenchmark();
+    //        }
+    //      }
+    //    }     
+    //});
   }
 }
