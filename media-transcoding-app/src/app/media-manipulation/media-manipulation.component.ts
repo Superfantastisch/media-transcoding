@@ -105,7 +105,7 @@ export class MediaManipulationComponent implements AfterViewInit {
       let arrayBuffer = reader.result; 
       if (arrayBuffer) {       
         this.mediaForm.patchValue({
-          inputMediaFile:  new Uint8Array(arrayBuffer)
+          inputMediaFile:  new Uint8Array(arrayBuffer)do
         });         
       }
     }
