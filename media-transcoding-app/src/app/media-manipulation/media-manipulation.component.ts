@@ -228,10 +228,10 @@ export class MediaManipulationComponent implements AfterViewInit {
         //  'error': err,
         //  'time': message.time
         //});
-        //this._mediaManipulationService.addTestResult(this.testResult).subscribe(res => {
-        //  console.log('post result');
-        //  console.log(res);
-        //});
+        this._mediaManipulationService.addTestResult(this.testResult).subscribe(res => {
+          console.log('post result');
+          console.log(res);
+        });
       } else if (message.type === 'benchresult') {
         // this.mediaForm.patchValue({
         //   inputMediaFile: null
@@ -264,6 +264,7 @@ export class MediaManipulationComponent implements AfterViewInit {
       this.testResult.Resolution = this.mediaForm.get('resolution').value;
       this.testResult.TestRunIndex = this.mediaForm.get('testRunIndex').value;
       this.testResult.TestType = this.mediaManipulationState.type;
+      // this.testResult.FileDuration = 596;
 
       this.ffMpegOutputFiles = [];
       const args = this.parseArguments(this.ffmpegCmd);
@@ -327,19 +328,19 @@ export class MediaManipulationComponent implements AfterViewInit {
   //};
   testResult = {
     FileName: "",    
-    TestRunIndex: null,
+    TestRunIndex: 0,
     TestType: null,
     Resolution: null,
     Browser: `Chrome`,
     ComputerType: 'Surface Pro 2',
     TestTime: null,
-    FileDuration: null
+    FileDuration: 596
   }
-  sampleVideo = null;
-  benchTypeIndex = 0;
-  resolutionIndex = 0;
-  testRunIndex = 1;
-  videoSrcIndex = 0;
+  //sampleVideo = null;
+  //benchTypeIndex = 0;
+  //resolutionIndex = 0;
+  //testRunIndex = 1;
+  //videoSrcIndex = 0;
 
   //setupBenchmark() {
   //  if (this.benchTypeIndex < this.mediaManipulationType.length) {
