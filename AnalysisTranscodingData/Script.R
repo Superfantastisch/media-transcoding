@@ -13,7 +13,7 @@ names(testResultResponse)
 testResultContent <- content(testResultResponse, as = "text", encoding = "UTF-8")
 testResultContent
 write(testResultContent, "testResult.json")
-
+write(testResultContent, "secondTestResult.json")
 testResult = testResultContent %>% fromJSON
 testResult
 names(testResult)
